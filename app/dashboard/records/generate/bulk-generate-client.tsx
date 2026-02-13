@@ -5,9 +5,24 @@ import { IDRenderer } from '@/components/id-renderer'
 import { Button } from '@/components/ui/button'
 import { toPng } from 'html-to-image'
 import jsPDF from 'jspdf'
-import { Loader2, Download, CheckCircle, AlertCircle } from 'lucide-react'
+import { Loader2, Download, Eye, AlertCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface BulkGenerateClientProps {
     records: any[]
@@ -15,29 +30,43 @@ interface BulkGenerateClientProps {
     organization: any
 }
 
-export default function BulkGenerateClient({ records, templates, organization }: BulkGenerateClientProps) {
+export default function BulkGenerateClient({ records: initialRecords, templates, organization }: BulkGenerateClientProps) {
+    const [records, setRecords] = useState(initialRecords)
     const [generating, setGenerating] = useState(false)
     const [progress, setProgress] = useState(0)
-    // We need refs for each record... strictly speaking we can render them one by one or all at once.
-    // Rendering all at once might be heavy if there are 100s.
-    // But basic approach: Render all hidden, then capture.
+    const [selectedRecord, setSelectedRecord] = useState<any>(null)
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
-    // We can use a map of refs
+    // Refs for generation (hidden)
     const refs = useRef<{ [key: string]: { front: HTMLDivElement | null, back: HTMLDivElement | null } }>({})
 
     const getTemplate = (id: string) => templates.find(t => t.id === id)
 
+    // Debug logging
+    useEffect(() => {
+        if (!records.length || !templates.length) return
+
+        // Log warnings for missing templates
+        records.forEach(r => {
+            const t = getTemplate(r.template_id)
+            if (!t) {
+                console.warn(`Template not found for record ${r.last_name}`)
+            }
+        })
+    }, [records, templates])
+
+
     const handleDownloadAllPDF = async () => {
+        if (records.length === 0) return
         setGenerating(true)
         setProgress(0)
         const toastId = toast.loading('Generating PDF...')
 
         try {
             const pdf = new jsPDF({
-                orientation: 'p', // We will set individual page orientation
+                orientation: 'p',
                 unit: 'mm',
             })
-            // Remove default first page
             pdf.deletePage(1)
 
             let count = 0
@@ -46,7 +75,10 @@ export default function BulkGenerateClient({ records, templates, organization }:
                 if (!template) continue
 
                 const recordRefs = refs.current[record.id]
-                if (!recordRefs?.front || !recordRefs?.back) continue
+                if (!recordRefs?.front || !recordRefs?.back) {
+                    console.warn(`Missing refs for record ${record.id}`)
+                    continue
+                }
 
                 // Capture Front
                 const frontDataUrl = await toPng(recordRefs.front, { cacheBust: true, pixelRatio: 2 })
@@ -75,13 +107,31 @@ export default function BulkGenerateClient({ records, templates, organization }:
         setGenerating(false)
     }
 
+    const openPreview = (record: any) => {
+        setSelectedRecord(record)
+        setIsPreviewOpen(true)
+    }
+
+    const removeRecord = (id: string) => {
+        setRecords(prev => prev.filter(r => r.id !== id))
+    }
+
+    if (records.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <p className="text-muted-foreground">No records selected for generation.</p>
+                <Button onClick={() => window.history.back()} variant="outline">Go Back</Button>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col gap-8">
             <div className="bg-white p-6 rounded shadow flex flex-col items-center justify-center gap-4 sticky top-4 z-10 border">
                 <h2 className="text-xl font-bold">Bulk Generation</h2>
                 <div className="flex gap-4 items-center">
                     <span className="text-sm font-medium">{records.length} records selected</span>
-                    <Button onClick={handleDownloadAllPDF} disabled={generating}>
+                    <Button onClick={handleDownloadAllPDF} disabled={generating || records.length === 0}>
                         {generating ? <Loader2 className="animate-spin mr-2" /> : <Download className="mr-2" />}
                         Download All (PDF)
                     </Button>
@@ -94,63 +144,120 @@ export default function BulkGenerateClient({ records, templates, organization }:
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {records.map(record => {
-                    const template = getTemplate(record.template_id)
-                    if (!template) return (
-                        <div key={record.id} className="p-4 border border-red-200 bg-red-50 text-red-500 rounded">
-                            <AlertCircle className="inline mr-2" />
-                            Missing Template for {record.last_name}
-                        </div>
-                    )
+            <div className="bg-white rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Employee</TableHead>
+                            <TableHead>Template</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {records.map(record => {
+                            const template = getTemplate(record.template_id)
+                            return (
+                                <TableRow key={record.id}>
+                                    <TableCell>
+                                        <div className="font-medium">{record.last_name}, {record.first_name}</div>
+                                        <div className="text-xs text-muted-foreground">{record.employee_no}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {template ? (
+                                            <span className="text-sm">{template.name}</span>
+                                        ) : (
+                                            <span className="text-red-500 flex items-center gap-1">
+                                                <AlertCircle size={14} /> Missing
+                                            </span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="icon" onClick={() => openPreview(record)} disabled={!template} title="Preview">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => removeRecord(record.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50" title="Remove from list">
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
+                    </TableBody>
+                </Table>
+            </div>
 
-                    return (
-                        <div key={record.id} className="flex flex-col gap-4 border p-4 rounded bg-gray-50/50">
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="font-bold">{record.last_name}, {record.first_name}</span>
-                                <span className="text-xs text-muted-foreground">{record.employee_no}</span>
-                            </div>
-
-                            {/* Render Off-screen / Hidden but accessible for capture? 
-                                Actually toPng requires the element to be in DOM and visible (mostly).
-                                We can scale them down for preview, or just render them normally.
-                                Let's render them in a scaled wrapper for preview, but capture might need full scale?
-                                toPng handles scaling with 'pixelRatio'.
-                                Let's just render them.
-                            */}
-
-                            <div className="flex flex-col items-center gap-2 transform scale-75 origin-top">
-                                <span className="text-xs font-semibold text-gray-500">Front</span>
-                                <div className="border shadow-sm">
+            {/* Preview Dialog */}
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>ID Preview: {selectedRecord?.last_name}, {selectedRecord?.first_name}</DialogTitle>
+                    </DialogHeader>
+                    {selectedRecord && getTemplate(selectedRecord.template_id) && (
+                        <div className="flex flex-col md:flex-row gap-8 items-start justify-center p-4 bg-gray-50 rounded">
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-500">Front</span>
+                                <div className="border shadow-lg">
                                     <IDRenderer
-                                        ref={(el) => {
-                                            if (!refs.current[record.id]) refs.current[record.id] = { front: null, back: null }
-                                            refs.current[record.id].front = el
-                                        }}
-                                        template={template}
-                                        fields={template.template_fields}
-                                        record={record}
+                                        template={getTemplate(selectedRecord.template_id)}
+                                        fields={getTemplate(selectedRecord.template_id).template_fields}
+                                        record={selectedRecord}
                                         organization={organization}
                                         side="front"
                                         scale={1}
                                     />
                                 </div>
-                                <span className="text-xs font-semibold text-gray-500 mt-2">Back</span>
-                                <div className="border shadow-sm">
+                            </div>
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-500">Back</span>
+                                <div className="border shadow-lg">
                                     <IDRenderer
-                                        ref={(el) => {
-                                            if (!refs.current[record.id]) refs.current[record.id] = { front: null, back: null }
-                                            refs.current[record.id].back = el
-                                        }}
-                                        template={template}
-                                        fields={template.template_fields}
-                                        record={record}
+                                        template={getTemplate(selectedRecord.template_id)}
+                                        fields={getTemplate(selectedRecord.template_id).template_fields}
+                                        record={selectedRecord}
                                         organization={organization}
                                         side="back"
                                         scale={1}
                                     />
                                 </div>
                             </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Hidden Rendering Area for PDF Generation */}
+            <div className="absolute top-0 left-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none">
+                {records.map(record => {
+                    const template = getTemplate(record.template_id)
+                    if (!template) return null
+                    return (
+                        <div key={record.id}>
+                            <IDRenderer
+                                ref={(el) => {
+                                    if (!refs.current[record.id]) refs.current[record.id] = { front: null, back: null }
+                                    refs.current[record.id].front = el
+                                }}
+                                template={template}
+                                fields={template.template_fields}
+                                record={record}
+                                organization={organization}
+                                side="front"
+                                scale={1} // Must be 1 for correct PDF size
+                            />
+                            <IDRenderer
+                                ref={(el) => {
+                                    if (!refs.current[record.id]) refs.current[record.id] = { front: null, back: null }
+                                    refs.current[record.id].back = el
+                                }}
+                                template={template}
+                                fields={template.template_fields}
+                                record={record}
+                                organization={organization}
+                                side="back"
+                                scale={1}
+                            />
                         </div>
                     )
                 })}

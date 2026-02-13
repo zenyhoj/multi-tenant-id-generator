@@ -52,6 +52,22 @@ interface BuilderClientProps {
 
 const MM_TO_PX = 3.78
 
+const DATA_KEYS = [
+    { label: 'First Name', value: 'first_name' },
+    { label: 'Last Name', value: 'last_name' },
+    { label: 'Middle Name', value: 'middle_name' },
+    { label: 'Name Suffix', value: 'name_suffix' },
+    { label: 'Role/Position', value: 'position' },
+    { label: 'Employee ID', value: 'employee_no' },
+    { label: 'Birthdate', value: 'birthdate' },
+    { label: 'Organization Name', value: 'organization.name' },
+    { label: 'Organization Address', value: 'organization.address' },
+    { label: 'Organization Contact', value: 'organization.contact' },
+    { label: 'Profile Image (URL)', value: 'profile_image' },
+    { label: 'Signature (URL)', value: 'signature' },
+    { label: 'QR Code Value', value: 'qrcode' },
+]
+
 export default function BuilderClient({ template, initialFields }: BuilderClientProps) {
     const [fields, setFields] = useState<TemplateField[]>(initialFields)
     const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
@@ -431,7 +447,21 @@ export default function BuilderClient({ template, initialFields }: BuilderClient
 
                             {selectedField.field_type !== 'icon' && (
                                 <div className="grid gap-2">
-                                    <Label>Data Key / Content</Label>
+                                    <div className="flex justify-between items-center">
+                                        <Label>Data Key / Content</Label>
+                                        <Select onValueChange={(val) => updateField(selectedField.id, { field_key: val })}>
+                                            <SelectTrigger className="h-6 w-[110px] text-[10px] px-2">
+                                                <SelectValue placeholder="Insert Variable..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {DATA_KEYS.map(k => (
+                                                    <SelectItem key={k.value} value={k.value} className="text-xs">
+                                                        {k.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <Input
                                         value={selectedField.field_key}
                                         onChange={(e) => updateField(selectedField.id, { field_key: e.target.value })}

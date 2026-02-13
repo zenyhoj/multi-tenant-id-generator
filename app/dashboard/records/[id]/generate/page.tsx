@@ -51,10 +51,17 @@ export default async function GeneratePage({ params }: { params: Promise<{ id: s
     if (!template) return <div>Template not found</div>
 
     // Fetch fields
-    const { data: fields } = await supabase
+    const { data: fields, error: fieldsError } = await supabase
         .from('template_fields')
         .select('*')
         .eq('template_id', template.id)
+
+    console.log('--- DEBUG: SingleGeneratePage ---')
+    console.log('Record ID:', id)
+    console.log('Template ID:', template.id)
+    console.log('Fields Found:', fields?.length)
+    if (fieldsError) console.error('Fields Error:', fieldsError)
+    console.log('-------------------------------')
 
     // Sign URLs if present
     if (record.photo_url) {

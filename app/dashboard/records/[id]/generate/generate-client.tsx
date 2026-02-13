@@ -16,11 +16,25 @@ interface GenerateClientProps {
     organization: any
 }
 
-export default function GenerateClient({ template, fields, record, organization }: GenerateClientProps) {
+import { fetchTemplateFields } from '../../generate/actions'
+
+export default function GenerateClient({ template, fields: initialFields, record, organization }: GenerateClientProps) {
     const frontRef = useRef<HTMLDivElement>(null)
     const backRef = useRef<HTMLDivElement>(null)
     const [generating, setGenerating] = useState(false)
+    const [fields, setFields] = useState<any[]>(initialFields)
     const supabase = createClient()
+
+    // Fetch fields if missing
+    useState(() => {
+        if (!initialFields || initialFields.length === 0) {
+            console.log('Fields missing, fetching from server action...')
+            fetchTemplateFields(template.id).then(data => {
+                console.log('Fetched fields:', data)
+                setFields(data)
+            })
+        }
+    })
 
     // Pre-process record data if needed (e.g. resolve photo_url)
     // For now assuming raw record

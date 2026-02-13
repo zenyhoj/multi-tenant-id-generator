@@ -45,10 +45,34 @@ export default async function BulkGeneratePage({ searchParams }: { searchParams:
         return <div>None of the selected records have a template assigned.</div>
     }
 
-    const { data: templates } = await supabase
+    const { data: templatesRaw, error: templateError } = await supabase
         .from('id_templates')
-        .select('*, template_fields(*)')
+        .select('*')
         .in('id', templateIds)
+
+    if (templateError) console.error('Template Error:', templateError)
+
+    // Fetch fields separately to avoid potential join/RLS issues
+    const { data: allFields, error: componentsError } = await supabase
+        .from('template_fields')
+        .select('*')
+        .in('template_id', templateIds)
+
+    if (componentsError) console.error('Fields Error:', componentsError)
+
+    const templates = templatesRaw?.map((t: any) => ({
+        ...t,
+        template_fields: allFields?.filter((f: any) => f.template_id === t.id) || []
+    }))
+
+    console.log('--- DEBUG: BulkGeneratePage (Refactored) ---')
+    if (templates) {
+        templates.forEach((t: any) => {
+            console.log(`Template: ${t.name} (${t.id})`)
+            console.log(`Fields count: ${t.template_fields?.length}`)
+        })
+    }
+    console.log('-------------------------------')
 
     // Sign URLs for photos and signatures
     const photoPaths: string[] = []

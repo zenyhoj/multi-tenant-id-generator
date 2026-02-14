@@ -62,11 +62,10 @@ export async function createRecord(formData: FormData) {
         last_name: formData.get('last_name') as string,
         employee_no: formData.get('employee_no') as string,
         position: formData.get('position') as string,
-        division: formData.get('division') as string,
-        school_name: formData.get('school_name') as string,
+        // school_name and division are now sourced from organization settings dynamically
 
         tin_number: formData.get('tin_number') as string,
-        sss_number: formData.get('sss_number') as string,
+        sss_gsis_number: formData.get('sss_gsis_number') as string,
         pagibig_number: formData.get('pagibig_number') as string,
         philhealth_number: formData.get('philhealth_number') as string,
 
@@ -148,11 +147,10 @@ export async function updateRecord(id: string, formData: FormData) {
         last_name: formData.get('last_name') as string,
         employee_no: formData.get('employee_no') as string,
         position: formData.get('position') as string,
-        division: formData.get('division') as string,
-        school_name: formData.get('school_name') as string,
+        // school_name and division are now sourced from organization settings dynamically
 
         tin_number: formData.get('tin_number') as string,
-        sss_number: formData.get('sss_number') as string,
+        sss_gsis_number: formData.get('sss_gsis_number') as string,
         pagibig_number: formData.get('pagibig_number') as string,
         philhealth_number: formData.get('philhealth_number') as string,
 

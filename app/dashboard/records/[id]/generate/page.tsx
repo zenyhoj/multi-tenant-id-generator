@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import GenerateClient from './generate-client'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
     params: {
         id: string
@@ -58,8 +60,11 @@ export default async function GeneratePage({ params }: { params: Promise<{ id: s
 
     console.log('--- DEBUG: SingleGeneratePage ---')
     console.log('Record ID:', id)
+    console.log('Record Data:', JSON.stringify(record, null, 2)) // Add this
     console.log('Template ID:', template.id)
     console.log('Fields Found:', fields?.length)
+    console.log('Template BG Front:', template.background_front_url)
+    console.log('Template BG Back:', template.background_back_url)
     if (fieldsError) console.error('Fields Error:', fieldsError)
     console.log('-------------------------------')
 

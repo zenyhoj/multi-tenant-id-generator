@@ -22,6 +22,7 @@ interface EditTemplateFormProps {
         width_mm: number
         height_mm: number
         orientation: string
+        measurement_unit?: string
     }
 }
 
@@ -42,10 +43,27 @@ export function EditTemplateForm({ template }: EditTemplateFormProps) {
         }
     }, [state?.error])
 
-    const [unit, setUnit] = useState('mm')
-    // Initialize width/height based on mm values from DB
-    const [width, setWidth] = useState(template.width_mm.toString())
-    const [height, setHeight] = useState(template.height_mm.toString())
+    const savedUnit = template.measurement_unit || 'mm'
+    const [unit, setUnit] = useState(savedUnit)
+
+    // Initialize width/height based on mm values from DB and saved unit
+    const [width, setWidth] = useState(() => {
+        if (savedUnit === 'in') {
+            return (template.width_mm / 25.4).toFixed(3)
+        } else if (savedUnit === 'px') {
+            return (template.width_mm * 96 / 25.4).toFixed(1)
+        }
+        return template.width_mm.toString()
+    })
+
+    const [height, setHeight] = useState(() => {
+        if (savedUnit === 'in') {
+            return (template.height_mm / 25.4).toFixed(3)
+        } else if (savedUnit === 'px') {
+            return (template.height_mm * 96 / 25.4).toFixed(1)
+        }
+        return template.height_mm.toString()
+    })
 
     const handleUnitChange = (newUnit: string) => {
         const w = parseFloat(width)

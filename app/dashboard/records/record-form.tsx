@@ -111,17 +111,6 @@ export function RecordForm({ templates, organization, initialData }: RecordFormP
 
                 {/* Conditional Fields */}
 
-                {shouldShow('school_name') && (
-                    <div className="grid gap-2">
-                        <Label htmlFor="school_name">Organization Name</Label>
-                        <Input
-                            id="school_name"
-                            name="school_name"
-                            defaultValue={initialData?.school_name || organization?.name}
-                        />
-                    </div>
-                )}
-
                 <div className="grid grid-cols-2 gap-4">
                     {shouldShow('position') && (
                         <div className="grid gap-2">
@@ -140,45 +129,27 @@ export function RecordForm({ templates, organization, initialData }: RecordFormP
                             </Select>
                         </div>
                     )}
-                    {shouldShow('division') && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="division">Division Name</Label>
-                            <Input
-                                id="division"
-                                name="division"
-                                defaultValue={initialData?.division || organization?.division_name}
-                            />
-                        </div>
-                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    {shouldShow('tin_number') && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="tin_number">TIN</Label>
-                            <Input id="tin_number" name="tin_number" defaultValue={initialData?.tin_number} />
-                        </div>
-                    )}
-                    {shouldShow('sss_number') && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="sss_number">SSS</Label>
-                            <Input id="sss_number" name="sss_number" defaultValue={initialData?.sss_number} />
-                        </div>
-                    )}
+                    <div className="grid gap-2">
+                        <Label htmlFor="tin_number">TIN</Label>
+                        <Input id="tin_number" name="tin_number" defaultValue={initialData?.tin_number} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="sss_gsis_number">SSS / GSIS</Label>
+                        <Input id="sss_gsis_number" name="sss_gsis_number" defaultValue={initialData?.sss_gsis_number} />
+                    </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    {shouldShow('pagibig_number') && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="pagibig_number">Pag-IBIG</Label>
-                            <Input id="pagibig_number" name="pagibig_number" defaultValue={initialData?.pagibig_number} />
-                        </div>
-                    )}
-                    {shouldShow('philhealth_number') && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="philhealth_number">PhilHealth</Label>
-                            <Input id="philhealth_number" name="philhealth_number" defaultValue={initialData?.philhealth_number} />
-                        </div>
-                    )}
+                    <div className="grid gap-2">
+                        <Label htmlFor="pagibig_number">Pag-IBIG</Label>
+                        <Input id="pagibig_number" name="pagibig_number" defaultValue={initialData?.pagibig_number} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="philhealth_number">PhilHealth</Label>
+                        <Input id="philhealth_number" name="philhealth_number" defaultValue={initialData?.philhealth_number} />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 border-t pt-4">

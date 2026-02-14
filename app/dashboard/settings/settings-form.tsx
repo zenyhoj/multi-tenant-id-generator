@@ -25,6 +25,7 @@ export function SettingsForm({ organization }: OrgSettingsProps) {
         const formData = new FormData(e.currentTarget)
         const updates = {
             name: formData.get('name') as string,
+            department_name: formData.get('department_name') as string,
             division_name: formData.get('division_name') as string,
             division_address: formData.get('division_address') as string,
             division_website: formData.get('division_website') as string,
@@ -125,14 +126,20 @@ export function SettingsForm({ organization }: OrgSettingsProps) {
                             <Input id="name" name="name" defaultValue={organization.name} required disabled={loading} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="division_name">Division Name</Label>
-                            <Input id="division_name" name="division_name" defaultValue={organization.division_name || ''} disabled={loading} />
+                            <Label htmlFor="department_name">Department Name</Label>
+                            <Input id="department_name" name="department_name" defaultValue={organization.department_name || ''} disabled={loading} placeholder="e.g. Department of Education" />
                         </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="division_address">Division Address</Label>
-                        <Input id="division_address" name="division_address" defaultValue={organization.division_address || ''} disabled={loading} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="division_name">Division Name</Label>
+                            <Input id="division_name" name="division_name" defaultValue={organization.division_name || ''} disabled={loading} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="division_address">Division Address</Label>
+                            <Input id="division_address" name="division_address" defaultValue={organization.division_address || ''} disabled={loading} />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">

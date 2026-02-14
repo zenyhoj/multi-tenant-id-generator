@@ -34,7 +34,27 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
         .select('*')
         .eq('template_id', template.id)
 
+    // Fetch organization info
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select(`
+            organization_id,
+            organizations (
+                name,
+                division_name,
+                department_name,
+                address,
+                contact
+            )
+        `)
+        .eq('id', user.id)
+        .single()
+
     return (
-        <BuilderClient template={template} initialFields={fields || []} />
+        <BuilderClient
+            template={template}
+            initialFields={fields || []}
+            organization={profile?.organizations}
+        />
     )
 }

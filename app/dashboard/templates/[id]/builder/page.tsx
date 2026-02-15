@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import BuilderClient from './builder-client'
+import ProfileError from './profile-error'
 
 interface BuilderPageProps {
     params: {
@@ -17,11 +18,35 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
         redirect('/login')
     }
 
+    // Fetch organization info
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+            organization_id,
+            organizations (
+                name,
+                division_name,
+                department_name,
+                division_address,
+                division_website
+            )
+        `)
+        .eq('id', user.id)
+        .single()
+
+
+
+    if (!profile) {
+        console.error('Profile is null for user:', user.id)
+        return <ProfileError userId={user.id} error={profileError?.message} />
+    }
+
     // Fetch template
     const { data: template } = await supabase
         .from('id_templates')
         .select('*')
         .eq('id', id)
+        .eq('organization_id', profile.organization_id)
         .single()
 
     if (!template) {
@@ -33,22 +58,6 @@ export default async function BuilderPage({ params }: { params: Promise<{ id: st
         .from('template_fields')
         .select('*')
         .eq('template_id', template.id)
-
-    // Fetch organization info
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select(`
-            organization_id,
-            organizations (
-                name,
-                division_name,
-                department_name,
-                address,
-                contact
-            )
-        `)
-        .eq('id', user.id)
-        .single()
 
     return (
         <BuilderClient

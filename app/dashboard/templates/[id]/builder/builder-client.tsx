@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { BuilderSettingsDialog } from './builder-settings-dialog'
 
 interface Template {
     id: string
@@ -31,11 +32,13 @@ interface Template {
     width_mm: number
     height_mm: number
     orientation: string
+    measurement_unit?: string
     background_front_url: string | null
     background_back_url: string | null
     background_color_front: string | null
     background_color_back: string | null
     preview_image_url?: string | null
+    organization_details?: any
 }
 
 interface TemplateField {
@@ -81,8 +84,7 @@ const DATA_KEYS = [
     { label: 'Birthdate', value: 'birthdate' },
     { label: 'Organization Name', value: 'organization.name' },
     { label: 'Department Name', value: 'organization.department_name' },
-    { label: 'Organization Address', value: 'organization.address' },
-    { label: 'Organization Contact', value: 'organization.contact' },
+
     { label: 'Division Name', value: 'organization.division_name' },
     { label: 'Division Address', value: 'organization.division_address' },
     { label: 'Division Website', value: 'organization.division_website' },
@@ -91,6 +93,7 @@ const DATA_KEYS = [
     { label: 'Superintendent', value: 'organization.superintendent_name' },
     { label: 'Superintendent Title', value: 'organization.superintendent_title' },
     { label: 'Profile Image (URL)', value: 'profile_image' },
+    { label: 'Head Signature (Org)', value: 'organization.signature_url' },
     { label: 'Signature (URL)', value: 'signature' },
     { label: 'Full Name (First Middle Last)', value: 'full_name_western' }, // Zeniepe Dela Cruz Balingit
     { label: 'Full Name (Last, First Middle)', value: 'full_name_eastern' }, // Balingit, Zeniepe Dela Cruz
@@ -107,6 +110,29 @@ const DATA_KEYS = [
 ]
 
 export default function BuilderClient({ template, initialFields, organization }: BuilderClientProps) {
+    // Template Settings State
+    const [templateSettings, setTemplateSettings] = useState({
+        name: template.name,
+        width: template.width_mm,
+        height: template.height_mm,
+        orientation: template.orientation,
+        unit: template.measurement_unit || 'mm',
+        orgDetails: template.organization_details
+    })
+
+    const onSettingsChange = (key: string, value: any) => {
+        setTemplateSettings(prev => ({ ...prev, [key]: value }))
+    }
+
+    // Use only template settings organization details.
+    // If not set, it's empty.
+    const effectiveOrganization = templateSettings.orgDetails ? {
+        ...templateSettings.orgDetails,
+        address: templateSettings.orgDetails.division_address || '',
+    } : {
+        // Fallback or empty defaults if needed, or let it be empty
+    }
+
     const [fields, setFields] = useState<TemplateField[]>(initialFields)
     const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([])
 
@@ -138,8 +164,9 @@ export default function BuilderClient({ template, initialFields, organization }:
     // if (!mounted) return null // Moved to end to prevent hook order issues
 
     // Calculate canvas dimensions
-    const canvasWidth = template.width_mm * MM_TO_PX
-    const canvasHeight = template.height_mm * MM_TO_PX
+    // Calculate canvas dimensions
+    const canvasWidth = templateSettings.width * MM_TO_PX
+    const canvasHeight = templateSettings.height * MM_TO_PX
 
     const [history, setHistory] = useState<TemplateField[][]>([])
     const [historyIndex, setHistoryIndex] = useState(-1)
@@ -478,8 +505,14 @@ export default function BuilderClient({ template, initialFields, organization }:
             border_radius: f.border_radius
         })))
 
-        // Save background colors and preview URL
+        // Save background colors and preview URL + Template Settings
         const updatePayload: any = {
+            name: templateSettings.name,
+            width_mm: templateSettings.width,
+            height_mm: templateSettings.height,
+            orientation: templateSettings.orientation,
+            measurement_unit: templateSettings.unit,
+            organization_details: templateSettings.orgDetails,
             background_color_front: backgroundColorFront,
             background_color_back: backgroundColorBack
         }
@@ -616,7 +649,7 @@ export default function BuilderClient({ template, initialFields, organization }:
                 }
                 return <ImageIcon className="text-gray-400" />
             case 'qrcode': return <QrCode className="text-gray-400" />
-            case 'signature': return <div className="italic text-gray-500">Signature</div>
+            case 'signature': return <div className="w-full h-full flex items-center justify-center border border-dashed text-gray-400"><PenTool className="h-4 w-4" /></div>
             case 'icon': {
                 const IconComponent = (LucideIcons as any)[field.icon_name || 'Star']
                 return IconComponent ? <IconComponent className="w-full h-full" /> : <Smile />
@@ -709,12 +742,11 @@ export default function BuilderClient({ template, initialFields, organization }:
                     <Link href="/dashboard/templates">
                         <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
                     </Link>
-                    <h2 className="font-semibold">{template.name}</h2>
-                    <Link href={`/dashboard/templates/${template.id}/edit`}>
-                        <Button variant="ghost" size="icon" title="Edit Settings">
-                            <Settings className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                    <h2 className="font-semibold">{templateSettings.name}</h2>
+                    <BuilderSettingsDialog
+                        settings={templateSettings}
+                        onSettingsChange={onSettingsChange}
+                    />
                     <div className="flex items-center border rounded-md ml-4">
                         <Button
                             variant={side === 'front' ? "secondary" : "ghost"}
@@ -1342,8 +1374,8 @@ export default function BuilderClient({ template, initialFields, organization }:
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="profile_image">Profile Image</SelectItem>
-                                                    <SelectItem value="signature">Signature</SelectItem>
-                                                    <SelectItem value="organization.logo">Org Logo</SelectItem>
+                                                    <SelectItem value="signature">Employee Signature</SelectItem>
+                                                    <SelectItem value="organization.signature_url">Head Signature (Org)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>

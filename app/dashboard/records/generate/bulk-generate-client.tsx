@@ -195,34 +195,45 @@ export default function BulkGenerateClient({ records: initialRecords, templates,
                         <DialogTitle>ID Preview: {selectedRecord?.last_name}, {selectedRecord?.first_name}</DialogTitle>
                     </DialogHeader>
                     {selectedRecord && getTemplate(selectedRecord.template_id) && (
-                        <div className="flex flex-col md:flex-row gap-8 items-start justify-center p-4 bg-gray-50 rounded">
-                            <div className="flex flex-col items-center gap-2">
-                                <span className="text-sm font-semibold text-gray-500">Front</span>
-                                <div className="border shadow-lg">
-                                    <IDRenderer
-                                        template={getTemplate(selectedRecord.template_id)}
-                                        fields={getTemplate(selectedRecord.template_id).template_fields}
-                                        record={selectedRecord}
-                                        organization={organization}
-                                        side="front"
-                                        scale={1}
-                                    />
+                        (() => {
+                            const template = getTemplate(selectedRecord.template_id)
+                            const effectiveOrganization = template.organization_details ? {
+                                ...organization,
+                                ...template.organization_details,
+                                address: template.organization_details.division_address || organization.division_address,
+                            } : organization
+
+                            return (
+                                <div className="flex flex-col md:flex-row gap-8 items-start justify-center p-4 bg-gray-50 rounded">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <span className="text-sm font-semibold text-gray-500">Front</span>
+                                        <div className="border shadow-lg">
+                                            <IDRenderer
+                                                template={template}
+                                                fields={template.template_fields}
+                                                record={selectedRecord}
+                                                organization={effectiveOrganization}
+                                                side="front"
+                                                scale={1}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <span className="text-sm font-semibold text-gray-500">Back</span>
+                                        <div className="border shadow-lg">
+                                            <IDRenderer
+                                                template={template}
+                                                fields={template.template_fields}
+                                                record={selectedRecord}
+                                                organization={effectiveOrganization}
+                                                side="back"
+                                                scale={1}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex flex-col items-center gap-2">
-                                <span className="text-sm font-semibold text-gray-500">Back</span>
-                                <div className="border shadow-lg">
-                                    <IDRenderer
-                                        template={getTemplate(selectedRecord.template_id)}
-                                        fields={getTemplate(selectedRecord.template_id).template_fields}
-                                        record={selectedRecord}
-                                        organization={organization}
-                                        side="back"
-                                        scale={1}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                            )
+                        })()
                     )}
                 </DialogContent>
             </Dialog>
@@ -232,6 +243,13 @@ export default function BulkGenerateClient({ records: initialRecords, templates,
                 {records.map(record => {
                     const template = getTemplate(record.template_id)
                     if (!template) return null
+
+                    const effectiveOrganization = template.organization_details ? {
+                        ...organization,
+                        ...template.organization_details,
+                        address: template.organization_details.division_address || organization.division_address,
+                    } : organization
+
                     return (
                         <div key={record.id}>
                             <IDRenderer
@@ -242,7 +260,7 @@ export default function BulkGenerateClient({ records: initialRecords, templates,
                                 template={template}
                                 fields={template.template_fields}
                                 record={record}
-                                organization={organization}
+                                organization={effectiveOrganization}
                                 side="front"
                                 scale={1} // Must be 1 for correct PDF size
                             />
@@ -254,7 +272,7 @@ export default function BulkGenerateClient({ records: initialRecords, templates,
                                 template={template}
                                 fields={template.template_fields}
                                 record={record}
-                                organization={organization}
+                                organization={effectiveOrganization}
                                 side="back"
                                 scale={1}
                             />

@@ -3,7 +3,7 @@
 
 import React, { forwardRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { QrCode, Image as ImageIcon } from 'lucide-react'
+import { QrCode, Image as ImageIcon, PenTool } from 'lucide-react'
 
 interface IDRendererProps {
     template: any
@@ -60,6 +60,14 @@ export const IDRenderer = forwardRef<HTMLDivElement, IDRendererProps>(({
         // Map School Name and Division to Organization Settings
         if (key === 'school_name') return organization?.name || ''
         if (key === 'division') return organization?.division_name || ''
+
+        // Handle Organization Assets (Logo and Head Signature)
+        if (key === 'organization.logo_url' && organization?.logo_url) {
+            return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organization-logos/${organization.logo_url}`
+        }
+        if (key === 'organization.signature_url' && organization?.signature_url) {
+            return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/organization-logos/${organization.signature_url}`
+        }
 
         if (key.startsWith('full_name_')) {
             const last = record?.last_name || ''
@@ -196,15 +204,15 @@ export const IDRenderer = forwardRef<HTMLDivElement, IDRendererProps>(({
                             {field.field_type === 'signature' && (
                                 content ? (
                                     <img
-                                        src={getFullImageUrl(content, 'signatures') || ''}
+                                        src={getFullImageUrl(content, 'id-signatures') || ''}
                                         alt="sign"
                                         crossOrigin="anonymous"
                                         className="w-full h-full object-contain"
                                         onError={(e) => console.error(`[IDRenderer] Failed to load signature: ${content}`)}
                                     />
                                 ) : (
-                                    <div className="w-full h-full border border-dashed flex items-center justify-center text-[10px] text-gray-400">
-                                        Sign
+                                    <div className="w-full h-full border border-dashed flex items-center justify-center text-gray-400">
+                                        <PenTool size={20} className="opacity-50" />
                                     </div>
                                 )
                             )}

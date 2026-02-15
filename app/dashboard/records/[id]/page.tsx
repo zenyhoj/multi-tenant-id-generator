@@ -105,7 +105,7 @@ export default async function ViewRecordPage({ params }: { params: Promise<{ id:
                         </div>
                         <div>
                             <span className="text-sm font-medium text-muted-foreground">SSS</span>
-                            <p>{record.sss_number || '-'}</p>
+                            <p>{record.sss_gsis_number || '-'}</p>
                         </div>
                         <div>
                             <span className="text-sm font-medium text-muted-foreground">Pag-IBIG</span>

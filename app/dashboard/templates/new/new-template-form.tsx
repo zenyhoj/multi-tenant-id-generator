@@ -1,14 +1,15 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { createTemplate } from '../actions'
+import { getUserOrganizations } from '../../organizations/actions'
 import { Button } from '@/components/ui/button'
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { useEffect } from 'react'
+import Link from 'next/link'
 
 const initialState = {
     error: '',
@@ -33,6 +34,18 @@ export function NewTemplateForm() {
     const [unit, setUnit] = useState('mm')
     const [width, setWidth] = useState('85.6')
     const [height, setHeight] = useState('53.98')
+    const [organizations, setOrganizations] = useState<any[]>([])
+    const [loadingOrgs, setLoadingOrgs] = useState(true)
+
+    useEffect(() => {
+        async function loadOrgs() {
+            setLoadingOrgs(true)
+            const orgs = await getUserOrganizations()
+            setOrganizations(orgs)
+            setLoadingOrgs(false)
+        }
+        loadOrgs()
+    }, [])
 
     const handleUnitChange = (newUnit: string) => {
         const w = parseFloat(width)
@@ -67,17 +80,46 @@ export function NewTemplateForm() {
             new_h = h_mm * 96 / 25.4
         }
 
-        // Format to avoid long decimals, but keep precision
-        // For pixels, we usually want integers or 1 decimal. For inches, 3 decals.
         const precision = newUnit === 'px' ? 1 : 3
         setWidth(parseFloat(new_w.toFixed(precision)).toString())
         setHeight(parseFloat(new_h.toFixed(precision)).toString())
         setUnit(newUnit)
     }
 
+    if (loadingOrgs) {
+        return <div className="p-8 text-center">Loading organizations...</div>
+    }
+
+    if (organizations.length === 0) {
+        return (
+            <div className="p-8 text-center space-y-4">
+                <p className="text-muted-foreground">You need to create an organization first.</p>
+                <Link href="/dashboard/organizations/new">
+                    <Button>Create Organization</Button>
+                </Link>
+            </div>
+        )
+    }
+
     return (
         <form action={formAction}>
             <CardContent className="grid gap-6">
+                <div className="grid gap-2">
+                    <Label htmlFor="organization_id">Organization</Label>
+                    <Select name="organization_id" required>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an organization" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {organizations.map((org) => (
+                                <SelectItem key={org.id} value={org.id}>
+                                    {org.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
                 <div className="grid gap-2">
                     <Label htmlFor="name">Template Name</Label>
                     <Input id="name" name="name" required placeholder="e.g. Employee Standard" />
@@ -138,7 +180,7 @@ export function NewTemplateForm() {
                 </div>
             </CardContent>
             <CardFooter className="justify-end gap-2">
-                <Button variant="outline" type="button" disabled={isPending}>Cancel</Button>
+                <Button variant="outline" type="button" disabled={isPending} onClick={() => window.history.back()}>Cancel</Button>
                 <Button type="submit" disabled={isPending}>{isPending ? 'Creating...' : 'Create Template'}</Button>
             </CardFooter>
         </form>

@@ -108,6 +108,12 @@ export default function GenerateClient({ template, fields: initialFields, record
         setGenerating(false)
     }
 
+    // Use organization details from template, ignore default profile organization
+    const effectiveOrganization = template.organization_details ? {
+        ...template.organization_details,
+        address: template.organization_details.division_address || '',
+    } : {}
+
     return (
         <div className="flex flex-col items-center gap-8 py-8">
             <div className="flex gap-4">
@@ -130,7 +136,7 @@ export default function GenerateClient({ template, fields: initialFields, record
                             template={template}
                             fields={fields}
                             record={record}
-                            organization={organization}
+                            organization={effectiveOrganization}
                             side="front"
                             scale={1}
                         />
@@ -145,7 +151,7 @@ export default function GenerateClient({ template, fields: initialFields, record
                             template={template}
                             fields={fields}
                             record={record}
-                            organization={organization}
+                            organization={effectiveOrganization}
                             side="back"
                             scale={1}
                         />

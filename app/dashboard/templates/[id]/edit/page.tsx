@@ -1,15 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { EditTemplateForm } from './edit-template-form'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+import { TemplateSettingsForm } from './settings-form'
 
-interface PageProps {
-    params: Promise<{
-        id: string
-    }>
-}
-
-export default async function EditTemplatePage({ params }: PageProps) {
+export default async function TemplateSettingsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -18,25 +14,29 @@ export default async function EditTemplatePage({ params }: PageProps) {
         redirect('/login')
     }
 
-    const { data: template } = await supabase
+    // Fetch template
+    const { data: template, error } = await supabase
         .from('id_templates')
         .select('*')
         .eq('id', id)
         .single()
 
-    if (!template) {
+    if (error || !template) {
         return <div>Template not found</div>
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-            <Card className="w-full max-w-lg">
-                <CardHeader>
-                    <CardTitle>Edit Template</CardTitle>
-                    <CardDescription>Modify your template dimensions and settings.</CardDescription>
-                </CardHeader>
-                <EditTemplateForm template={template} />
-            </Card>
+        <div className="p-8 max-w-4xl mx-auto">
+            <div className="flex items-center gap-4 mb-8">
+                <Link href={`/dashboard/templates/${id}/builder`}>
+                    <Button variant="ghost" size="icon">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                </Link>
+                <h1 className="text-3xl font-bold">Template Settings</h1>
+            </div>
+
+            <TemplateSettingsForm template={template} />
         </div>
     )
 }

@@ -1,14 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import GenerateClient from './generate-client'
 
 export const dynamic = 'force-dynamic'
-
-interface PageProps {
-    params: {
-        id: string
-    }
-}
 
 export default async function GeneratePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -19,21 +13,36 @@ export default async function GeneratePage({ params }: { params: Promise<{ id: s
         redirect('/login')
     }
 
-    // Fetch record
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) {
+        return <div>Profile not found</div>
+    }
+
+    // Fetch record scoped to the current organization
     const { data: record } = await supabase
         .from('id_records')
         .select('*')
         .eq('id', id)
+        .eq('organization_id', profile.organization_id)
         .single()
 
-    if (!record) return <div>Record not found</div>
+    if (!record) return notFound()
 
     // Fetch organization
     const { data: organization } = await supabase
         .from('organizations')
         .select('*')
-        .eq('id', record.organization_id)
+        .eq('id', profile.organization_id)
         .single()
+
+    if (!organization) {
+        return <div>Organization not found</div>
+    }
 
     // Fetch template
     // If record has no template_id, we might need to ask user to select one. 
@@ -48,6 +57,7 @@ export default async function GeneratePage({ params }: { params: Promise<{ id: s
         .from('id_templates')
         .select('*')
         .eq('id', record.template_id)
+        .eq('organization_id', profile.organization_id)
         .single()
 
     if (!template) return <div>Template not found</div>
@@ -58,15 +68,10 @@ export default async function GeneratePage({ params }: { params: Promise<{ id: s
         .select('*')
         .eq('template_id', template.id)
 
-    console.log('--- DEBUG: SingleGeneratePage ---')
-    console.log('Record ID:', id)
-    console.log('Record Data:', JSON.stringify(record, null, 2)) // Add this
-    console.log('Template ID:', template.id)
-    console.log('Fields Found:', fields?.length)
-    console.log('Template BG Front:', template.background_front_url)
-    console.log('Template BG Back:', template.background_back_url)
-    if (fieldsError) console.error('Fields Error:', fieldsError)
-    console.log('-------------------------------')
+    if (fieldsError) {
+        console.error('Failed to fetch template fields:', fieldsError.message)
+        return <div>Unable to load template fields.</div>
+    }
 
     // Sign URLs if present
     if (record.photo_url) {

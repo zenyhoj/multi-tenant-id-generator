@@ -34,6 +34,7 @@ export default async function DashboardLayout({
         { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { href: '/dashboard/templates', label: 'Templates', icon: FileText },
         { href: '/dashboard/records', label: 'ID Records', icon: Users },
+        { href: '/dashboard/organizations', label: 'Organizations', icon: Users },
         { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     ]
 

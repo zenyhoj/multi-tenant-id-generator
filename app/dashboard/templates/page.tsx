@@ -25,7 +25,7 @@ export default async function TemplatesPage() {
     const { data: templates } = await supabase
         .from('id_templates')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        // .eq('organization_id', profile.organization_id) // Removed to show all templates
         .order('created_at', { ascending: false })
 
     return (

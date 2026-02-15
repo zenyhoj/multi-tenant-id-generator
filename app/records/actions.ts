@@ -23,6 +23,8 @@ export async function createRecord(formData: FormData) {
     const photoFile = formData.get('photo') as File
     let photoPath = null
     if (photoFile && photoFile.size > 0) {
+        if (photoFile.size > 5 * 1024 * 1024) return { error: 'Photo must be less than 5MB' }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(photoFile.type)) return { error: 'Photo must be JPEG, PNG, or WebP' }
         const fileExt = photoFile.name.split('.').pop()
         const fileName = `${crypto.randomUUID()}.${fileExt}`
         const filePath = `${profile.organization_id}/${fileName}`
@@ -40,6 +42,8 @@ export async function createRecord(formData: FormData) {
     const signatureFile = formData.get('signature') as File
     let signaturePath = null
     if (signatureFile && signatureFile.size > 0) {
+        if (signatureFile.size > 5 * 1024 * 1024) return { error: 'Signature must be less than 5MB' }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(signatureFile.type)) return { error: 'Signature must be JPEG, PNG, or WebP' }
         const fileExt = signatureFile.name.split('.').pop()
         const fileName = `${crypto.randomUUID()}.${fileExt}`
         const filePath = `${profile.organization_id}/${fileName}`
@@ -109,6 +113,8 @@ export async function updateRecord(id: string, formData: FormData) {
     const photoFile = formData.get('photo') as File
     let photoPath = undefined
     if (photoFile && photoFile.size > 0) {
+        if (photoFile.size > 5 * 1024 * 1024) return { error: 'Photo must be less than 5MB' }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(photoFile.type)) return { error: 'Photo must be JPEG, PNG, or WebP' }
         const fileExt = photoFile.name.split('.').pop()
         const fileName = `${crypto.randomUUID()}.${fileExt}`
         const filePath = `${profile.organization_id}/${fileName}`
@@ -126,6 +132,8 @@ export async function updateRecord(id: string, formData: FormData) {
     const signatureFile = formData.get('signature') as File
     let signaturePath = undefined
     if (signatureFile && signatureFile.size > 0) {
+        if (signatureFile.size > 5 * 1024 * 1024) return { error: 'Signature must be less than 5MB' }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(signatureFile.type)) return { error: 'Signature must be JPEG, PNG, or WebP' }
         const fileExt = signatureFile.name.split('.').pop()
         const fileName = `${crypto.randomUUID()}.${fileExt}`
         const filePath = `${profile.organization_id}/${fileName}`
